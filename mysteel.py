@@ -7,17 +7,24 @@ import requests
 from selenium import webdriver
 import time
 import re
-
-
+import globalmap as gl
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+# gl._init()
 #mysteel
 def mysteel(username, password):
-    browser = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument('--headless')
+    browser = webdriver.Chrome(chrome_options=options)
     #登录mysteel铁矿石分站
     url = 'https://tks.mysteel.com/'
     browser.get(url)
-    sign = browser.find_element_by_xpath('//*[@id="mysteel-topBar"]/div[1]/span')
-    print(sign)
-    sign.click()
+    time.sleep(3)
+    # WebDriverWait(browser, 10, 0.5,ignored_exceptions='TimeoutException').until(lambda x: x.find_element_by_xpath('//*[@id="mysteel-topBar"]/div[1]/span').is_displayed())
+    browser.find_element_by_xpath('//*[@id="mysteel-topBar"]/div[1]/span').click()
+    # print(sign)
     #<span class="loginBtn btn">登录</span>
     input_username = browser.find_element_by_xpath('//*[@id="mysteel-topBar"]/div[1]/div/form/div[2]/input')
     #<input class="userName" type="text" required="required" placeholder="请输入用户名">
@@ -42,6 +49,7 @@ def mysteel(username, password):
     browser.get(kucunlink2)
     try:
         kucuntext = browser.find_element_by_xpath('//*[@id="text"]/p[1]').text
+        gl.set_value('kucun_text', kucuntext)
         print(kucuntext)
     except:
         print('需要重新登录')
@@ -50,6 +58,7 @@ def mysteel(username, password):
         browser.find_element_by_xpath('//*[@id="login-dialog"]/div[1]/div[4]/button').click()
         time.sleep(3)
         kucuntext = browser.find_element_by_xpath('//*[@id="text"]/p[1]').text
+        gl.set_value('kucun_text', kucuntext)
         print(kucuntext)
     #高炉开工率
     browser.get(kaigonglink)
@@ -57,7 +66,8 @@ def mysteel(username, password):
     print(kaigonglink2)
     #<a href="//tks.mysteel.com/18/1228/08/D46F179FC72070F8.html" title="12月28日进口矿港口库存统计与分析" target="_blank" class="ellipsis">12月28日进口矿港口库存统计与分析</a>
     browser.get(kaigonglink2)
-    kaigongtext = browser.find_element_by_xpath('//*[@id="text"]/p[2]').text
+    kaigongtext = browser.find_element_by_xpath('//*[@id="text"]/p').text
+    gl.set_value('kaigong_text', kaigongtext)
     print(kaigongtext)
 
     #铁矿石周评
@@ -70,10 +80,16 @@ def mysteel(username, password):
     print(zhoupinglink2)
     #获取周评文本内容
     browser.get(zhoupinglink2)
-    zhoupingtext = browser.find_elements_by_xpath('//*[@id="text"]/p')
-    print(len(zhoupingtext))
-    print(zhoupingtext[-2].text)
-    zhoupingtext = zhoupingtext[-2].text
+    zhoupinglist = browser.find_elements_by_xpath('//*[@id="text"]//p')
+    print(len(zhoupinglist))
+    zhoupingtext = ''
+    for li in zhoupinglist:
+        zhoupingtext = zhoupingtext + li.text
+    zhoupingtext1 = re.search('(?<=引言：)(.*?)(?=一)',zhoupingtext).group() + '\n' + re.search('(?<=下周市场预判)(.*?)(?=（本文数据详询)',zhoupingtext).group()
+    print(zhoupingtext1)
+    # print(zhoupingtext[-3].text, zhoupingtext[-2].text)
+    # zhoupingtext = zhoupingtext[-3].text + zhoupingtext[-2].text
+    gl.set_value('fenxi_text',zhoupingtext1)
 
 
     #废钢
@@ -97,19 +113,20 @@ def mysteel(username, password):
     print(feigangtext)
     print(feigangpic1_title, feigangpic1)
     print(feigangpic2_title, feigangpic2)
+    gl.set_value('feigang_text', feigangtext)
 
     response = requests.get(feigangpic1)
     print(response)
-    with open('C:\\Users\\LUS\Desktop\\废钢指数近一年变化.png', 'wb') as f:
+    with open('C:\\Users\\LUS\Desktop\\周报材料\\废钢指数近一年变化.png', 'wb') as f:
         f.write(response.content)
         f.close()
 
     response = requests.get(feigangpic2)
     print(response)
-    with open('C:\\Users\\LUS\Desktop\\各地废钢市场价格.png', 'wb') as f:
+    with open('C:\\Users\\LUS\Desktop\\周报材料\\各地废钢市场价格.png', 'wb') as f:
         f.write(response.content)
         f.close()
-    f_mysteel = open('C:\\Users\\LUS\\Desktop\\mysteel.txt', 'w', encoding='utf-8')
+    f_mysteel = open('C:\\Users\\LUS\\Desktop\\周报材料\\mysteel.txt', 'w', encoding='utf-8')
     f_mysteel.write(kucuntext + '\n\n')
     f_mysteel.write(kaigongtext + '\n\n')
     f_mysteel.write(zhoupingtext + '\n\n')
@@ -120,7 +137,11 @@ def mysteel(username, password):
 
 #钢之家
 def steelhome(username,password):
-    browser = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument('--headless')
+    browser = webdriver.Chrome(chrome_options=options)
     browser.get('http://news2.steelhome.cn/ll/col-058/var-c13/')
     report_list = browser.find_elements_by_xpath('/html/body/center/div[7]/div[2]/form/div/div/a')
     # print(report_list)
@@ -138,15 +159,16 @@ def steelhome(username,password):
     time.sleep(2)
     gangzhijiatext = browser.find_element_by_xpath('//*[@id="sth_content"]').text
     # print(gangzhijiatext)
-    gangzhijiatext = re.search('海运费：(.+?)。',gangzhijiatext).group()
+    gangzhijiatext = re.search('海运费：(.+?)美元。',gangzhijiatext).group()
     print(gangzhijiatext)
+    gl.set_value('haiyunfei_text', gangzhijiatext)
 
 #保存获得的内容
-    f_mysteel = open('C:\\Users\\LUS\\Desktop\\mysteel.txt', 'a+', encoding='utf-8')
+    f_mysteel = open('C:\\Users\\LUS\\Desktop\\周报材料\\mysteel.txt', 'a+', encoding='utf-8')
     f_mysteel.write(gangzhijiatext)
     #关闭文件
     f_mysteel.close()
     browser.quit()
 
 
-
+# mysteel('hnxgscb', 'xg8659291')

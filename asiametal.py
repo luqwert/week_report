@@ -5,12 +5,16 @@ import datetime
 import requests
 from selenium import webdriver
 import time
-
+import globalmap as gl
 
 def asiametal(username, password):
     #主页
     url = 'http://www.asianmetal.cn/'
-    browser = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    options.add_argument('--headless')
+    browser = webdriver.Chrome(chrome_options=options)
     browser.get(url)
     time.sleep(5)
 
@@ -58,7 +62,7 @@ def asiametal(username, password):
 
     response = requests.get(piclink,headers=h,cookies=cookies)
     print(response)
-    with open('C:\\Users\\LUS\Desktop\\锰片价格.png', 'wb') as f:
+    with open('C:\\Users\\LUS\Desktop\\周报材料\\锰片价格.png', 'wb') as f:
         f.write(response.content)
         f.close()
 
@@ -69,13 +73,13 @@ def asiametal(username, password):
     print(report_link,report_title)
     response = requests.get(report_link,headers=h,cookies=cookies)
     print(response)
-    f = open('C:\\Users\\LUS\Desktop\\' + report_title + '.pdf','wb')
+    f = open('C:\\Users\\LUS\Desktop\\周报材料\\' + report_title + '.pdf','wb')
     f.write(response.content)      # r.content -> requests中的二进制响应内容：以字节的方式访问请求响应体，对于非文本请求
     f.close()
     browser.quit()
 
 
-
+# asiametal('sinometal', '50808266')
 
 
 
